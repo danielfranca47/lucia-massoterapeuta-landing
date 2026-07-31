@@ -43,7 +43,11 @@ export default function Services() {
             return (
               <div className="service-card" key={key}>
                 <div className="service-media">
-                  <img src={image.src} alt={image.alt} />
+                  <img
+                    src={image.src}
+                    alt={image.alt}
+                    className={`service-img service-img--${key}`}
+                  />
                   <div className="service-price">{card.price}</div>
                   <div className="service-loc">{card.loc}</div>
                 </div>

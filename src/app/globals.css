@@ -213,6 +213,7 @@ section{ padding:110px 0; }
 .service-card:hover{ transform:translateY(-6px); border-color:var(--ember);}
 .service-media{ position:relative; height:210px; overflow:hidden;}
 .service-media img{ width:100%; height:100%; object-fit:cover;}
+.service-img--sunset{ object-position:center 85%;}
 .service-price{
   position:absolute; top:16px; right:16px;
   background:var(--ink); color:var(--gold);
