@@ -47,6 +47,20 @@ evento na agenda nesta rodada (ver "Fora de escopo").
   - Casal (Olhão): 18:00–20:00
 - Se a API do Google falhar: mostrar erro e bloquear seleção de horário —
   nunca mostrar disponibilidade inventada.
+- **A Lúcia mantém 3 agendas separadas** (Air BnB, Terraço, Gabinete Faro —
+  ver detalhe abaixo). Como ela é uma pessoa só, um compromisso em
+  qualquer uma delas bloqueia a disponibilidade nas outras também — as 3
+  são consultadas juntas e tratadas como uma lista única de horários
+  ocupados, aplicada igualmente aos 3 serviços (sem mapear "agenda X só
+  vale pro serviço Y").
+
+### As 3 agendas da Lúcia
+
+| Agenda | O que registra |
+|---|---|
+| Air BnB | Marcações recebidas pela plataforma Airbnb — terraço ou deslocação |
+| Terraço | Marcações do terraço em Olhão que não vieram do Airbnb |
+| Gabinete Faro | Marcações no gabinete privado de Faro |
 
 ---
 
@@ -63,8 +77,9 @@ passado, e sem sobrepor `[busy.start − 30min, busy.end + 30min]`.
 Browser (BookingWidget)
    → fetch /api/availability?year=2026&month=7
 Next.js API route (server, credencial nunca exposta)
-   → Google Calendar API: calendar.freebusy.query()
-   → devolve só { busy: [{start,end}, ...] } — sem título/detalhe de eventos
+   → Google Calendar API: calendar.freebusy.query() nas 3 agendas de uma vez
+   → devolve só { busy: [{start,end}, ...] }, já com as 3 juntas
+     — sem título/detalhe de eventos, sem dizer de qual agenda veio cada uma
 Browser
    → gera dinamicamente os horários de início válidos do serviço/dia
      cruzando expediente + duração + folga de 30min com os intervalos busy
@@ -86,8 +101,8 @@ reais da agenda da Lúcia, sem nenhum impacto no site atual.
 | Área | O que muda |
 |---|---|
 | `package.json` | Adiciona dependência `googleapis` |
-| `src/app/api/availability/route.ts` (novo) | `GET`, query params `year`/`month` (a disponibilidade ocupada é a mesma pra qualquer serviço — quem interpreta por duração/expediente é o front-end na Fase 2/3); autentica via Service Account, chama `calendar.freebusy.query` (escopo `calendar.freebusy`), devolve `{ busy: [{start, end}] }`; erro → HTTP 500/502 + `{ error }` |
-| `.env.example` (novo, comitado) | Documenta `GOOGLE_CALENDAR_ID`, `GOOGLE_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` (placeholders) |
+| `src/app/api/availability/route.ts` (novo) | `GET`, query params `year`/`month` (a disponibilidade ocupada é a mesma pra qualquer serviço — quem interpreta por duração/expediente é o front-end na Fase 2/3); autentica via Service Account, chama `calendar.freebusy.query` com as 3 agendas (`GOOGLE_CALENDAR_IDS`) numa única requisição (escopo `calendar.freebusy`), junta os `busy` das 3 num só array e devolve `{ busy: [{start, end}] }`; erro → HTTP 500/502 + `{ error }` |
+| `.env.example` (novo, comitado) | Documenta `GOOGLE_CALENDAR_IDS` (lista separada por vírgula, uma por agenda), `GOOGLE_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` (placeholders) |
 | `.env.local` (não comitado) | Valores reais para dev local |
 
 **Passo externo (manual, fora do editor) — roteiro recomendado**
@@ -123,24 +138,30 @@ gerada é vista só pelo Daniel.
 8. Anotar o e-mail da Service Account, visível na tela (formato
    `nome@id-do-projeto.iam.gserviceaccount.com`).
 
-*Parte C — a Lúcia faz de novo (só isso, sem tocar em Cloud Console):*
+*Parte C — a Lúcia faz de novo (só isso, sem tocar em Cloud Console) —
+repetir os passos 9-10 pras 3 agendas dela (Air BnB, Terraço, Gabinete
+Faro), uma de cada vez:*
 9. Abrir [calendar.google.com](https://calendar.google.com/) → engrenagem
-   ⚙ → escolher a agenda dela na lista à esquerda → **"Configurações e
-   compartilhamento"** → **"Compartilhar com pessoas específicas" →
-   "Adicionar pessoas"** → colar o e-mail da Service Account (passo 8) →
-   permissão **"Ver apenas informações de disponibilidade (ocupado/livre)"**
-   (a mais restrita da lista — não dá acesso a título/detalhe dos eventos)
-   → **Enviar**.
-10. Na mesma tela de configurações da agenda, seção **"Integrar agenda"**
-    → copiar o **"ID da agenda"** (normalmente é o próprio e-mail Gmail
-    dela) e passar pro Daniel.
+   ⚙ → escolher **uma das 3 agendas** na lista à esquerda →
+   **"Configurações e compartilhamento"** → **"Compartilhar com pessoas
+   específicas" → "Adicionar pessoas"** → colar o e-mail da Service
+   Account (passo 8) → permissão **"Ver apenas informações de
+   disponibilidade (ocupado/livre)"** (a mais restrita da lista — não dá
+   acesso a título/detalhe dos eventos) → **Enviar**.
+10. Na mesma tela de configurações dessa agenda, seção **"Integrar
+    agenda"** → copiar o **"ID da agenda"** (pra agendas secundárias
+    criadas por ela, costuma ser algo como
+    `xxxxx@group.calendar.google.com`, diferente do e-mail Gmail dela) e
+    anotar. Repetir os passos 9-10 pras outras 2 agendas, guardando os 3
+    IDs, e passar os 3 pro Daniel.
 
 *Parte D — o Daniel finaliza (local + Vercel):*
 11. Abrir o `.json` baixado no passo 7: `client_email` vira
     `GOOGLE_SERVICE_ACCOUNT_EMAIL`, `private_key` vira
     `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` (colar com as quebras de linha
     como `\n` literais, numa linha só — igual ao exemplo em
-    `.env.example`), e o ID do passo 10 vira `GOOGLE_CALENDAR_ID`.
+    `.env.example`), e os 3 IDs do passo 10 viram `GOOGLE_CALENDAR_IDS`,
+    separados por vírgula, sem espaço.
 12. Copiar `.env.example` para `.env.local` (não comitado) e preencher os
     3 valores, pra testar localmente.
 13. Quando o site for pro Vercel: as mesmas 3 variáveis em Project
@@ -157,6 +178,7 @@ API específica.
 | # | Commit | O que foi implementado |
 |---|---|---|
 | 1 | `3d1c130` | dependência `googleapis` + override de `gaxios` (corrige 4 vulnerabilidades altas herdadas), rota `GET /api/availability` (freebusy, sem escrever na agenda) e `.env.example` |
+| 2 | (a registrar no push) | rota e `.env.example` passam de 1 pra 3 agendas (`GOOGLE_CALENDAR_IDS`) — a Lúcia mantém agendas separadas por canal (Air BnB/Terraço/Gabinete Faro); as 3 são consultadas juntas e tratadas como uma disponibilidade única |
 
 ### Relatório da Fase 1 — o que mudou na prática
 
@@ -208,9 +230,9 @@ nos 3 serviços, em PT e EN.
 ## Checks de Validação
 
 ### Cenário 1 — Rota de API devolve dados reais (Fase 1)
-- [ ] Com env vars reais configuradas, chamar `/api/availability?year=2026&month=7`
-- [ ] Confirmar que os intervalos `busy` batem com eventos reais na agenda da Lúcia
-- [ ] Confirmar que sem credencial/agenda compartilhada a rota devolve erro claro (HTTP 500 + `{ error }`), não trava
+- [ ] Com env vars reais configuradas (as 3 agendas em `GOOGLE_CALENDAR_IDS`), chamar `/api/availability?year=2026&month=7`
+- [ ] Criar um evento de teste em cada uma das 3 agendas (Air BnB, Terraço, Gabinete Faro) e confirmar que os 3 aparecem juntos em `busy`
+- [ ] Confirmar que sem credencial/agenda compartilhada a rota devolve erro claro (HTTP 500/502 + `{ error }`), não trava
 
 ### Cenário 2 — Slots dinâmicos corretos (Fase 2/3)
 - [ ] Criar um evento de teste na agenda da Lúcia num horário dentro do expediente do Premium
