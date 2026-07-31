@@ -158,6 +158,30 @@ visual e bilíngues.
 
 `#reservar` fica como placeholder vazio nesta fase.
 
+### Commits Fase 2
+
+| # | Commit | O que foi implementado |
+|---|---|---|
+| 1 | `cc8df81` | imagens extraídas, dicionários PT/EN + LangProvider, 8 componentes estáticos, CSS portado |
+
+### Relatório da Fase 2 — o que mudou na prática
+
+**Antes:** todo o texto do site vivia como pares `data-pt`/`data-en` dentro do
+HTML, trocados via `setLang()` mexendo em `innerHTML`; as imagens eram
+base64 embutido no próprio arquivo.
+**Agora:** o texto vive em dois dicionários TypeScript tipados (erro de
+compilação se faltar uma tradução), trocados via Context/`useLang()`; as
+imagens são arquivos reais em `public/images/`. Todas as seções estáticas
+(Nav, Hero, Intro, Services, Ritual, Locations, Social, Footer) estão
+portadas — falta só o widget de agendamento (`#reservar`, Fase 3/4).
+
+Decisão registrada durante a fase: os botões "Reservar" dos 3 cards de
+serviço, que no original chamavam `selectService(key)` pré-selecionando o
+serviço no calendário, por enquanto só rolam até `#reservar` (ainda vazio).
+A pré-seleção real será ligada na Fase 3, quando o `BookingWidget` existir.
+
+**Para validar:** Cenário 2, abaixo.
+
 ### Fase 3 — Agendamento parte A: dados + seleção de serviço + calendário
 
 | Área | O que muda |
@@ -165,6 +189,7 @@ visual e bilíngues.
 | `src/data/services.ts`, `src/lib/calendar.ts` | criados |
 | `src/components/Booking/{BookingWidget,ServiceSelect,CalendarPanel}.tsx` | criados |
 | `src/app/globals.css` | CSS de `.booking-panel`, `.service-select`, `.cal-*` |
+| `src/components/Services.tsx` | botões "Reservar" passam a pré-selecionar o serviço no widget (ligação combinada na Fase 2), não só rolar até `#reservar` |
 
 ### Fase 4 — Agendamento parte B: horários, resumo, formulário, WhatsApp
 
@@ -204,9 +229,15 @@ ajuste final do `.gitignore`, remover este arquivo de implementação.
   eyebrow em Space Mono com o mesmo traço/cor) confere com o original
 
 ### Cenário 2 — Fase 2: paridade visual das seções estáticas
-- [ ] Todas as seções estáticas renderizam com paridade visual do `legacy/`
-- [ ] Toggle PT/EN funciona em todas elas
-- [ ] Responsivo em desktop e ≤980px
+- [x] Todas as seções estáticas renderizam com paridade visual do `legacy/`
+- [x] Toggle PT/EN funciona em todas elas
+- [x] Responsivo em desktop e ≤980px
+- **Validado em:** 31/07/2026 — comparação via Chrome DevTools MCP (screenshots
+  hero/intro/services/ritual/locations/social/footer vs. `legacy/`), toggle
+  EN conferido na íntegra, viewport 390px conferido (navlinks somem,
+  services-grid vira 1 coluna), `tsc --noEmit` e `npm run lint` limpos
+  (só os avisos esperados de `<img>` vs. `next/image`, decisão já registrada),
+  console do navegador sem erros de hidratação
 
 ### Cenário 3 — Fase 3: calendário e seleção de serviço
 - [ ] Nos 3 serviços × 2 idiomas: selecionar serviço destaca o card
