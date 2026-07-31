@@ -104,7 +104,7 @@ Antes de divulgar a página para clientes reais, pelo menos isto precisa ser
 resolvido (registrar cada um como uma implementação em
 `docs/implementations/` quando for endereçado):
 
-1. **`WHATSAPP_NUMBER` real** — hoje é o placeholder `'351900000000'` em
+1. ~~**`WHATSAPP_NUMBER` real**~~ — resolvido: `351966897721` em
    `src/lib/whatsapp.ts`.
 2. **Disponibilidade real** — hoje é simulada (`isTaken` em
    `src/lib/calendar.ts`); decidir se continua simulada, se vira uma lista
@@ -129,8 +129,7 @@ Centralizados em `src/data/contact.ts` (`INSTAGRAM_URL`, `INSTAGRAM_HANDLE`,
 `MAPS_FARO_URL`):
 
 - Instagram: `@lucia_massoterapeuta_faro.pt`
-- WhatsApp: **placeholder** `351900000000` em `src/lib/whatsapp.ts` (ver
-  "Do protótipo à produção")
+- WhatsApp: `351966897721` em `src/lib/whatsapp.ts`
 - Locais: gabinete privado em Faro; terraço/rooftop privado em Olhão
 - Conformidade citada no footer: normas da DGS, formação certificada DGERT
   (não alterar sem confirmação — é uma claim regulatória)

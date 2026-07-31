@@ -1,6 +1,4 @@
-// TODO: placeholder — trocar pelo WhatsApp real da Lúcia antes de publicar
-// (ver CLAUDE.md, "Do protótipo à produção")
-export const WHATSAPP_NUMBER = "351900000000";
+export const WHATSAPP_NUMBER = "351966897721";
 
 export interface BookingSelection {
   serviceName: string;
