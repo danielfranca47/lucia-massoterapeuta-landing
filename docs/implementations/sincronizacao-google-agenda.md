@@ -200,8 +200,29 @@ cruzar com dados de uma agenda.
 
 | Área | O que muda |
 |---|---|
-| `src/data/services.ts` | `Service` troca `slots: string[]` por `durationMinutes: number` + `workWindow: { start: string; end: string }` |
+| `src/data/services.ts` | `Service` ganha `durationMinutes: number` + `workWindow: { start: string; end: string }` (valores reais dos 3 serviços) — `slots` mantido por enquanto (`@deprecated`), a UI ainda o usa até a Fase 3 |
 | `src/lib/availability.ts` (novo) | `generateSlotsForDay(service, date, busy, now)` — função pura; constantes `BUFFER_MINUTES = 30` e `SLOT_GRANULARITY_MINUTES = 30` |
+
+### Commits Fase 2
+
+| # | Commit | O que foi implementado |
+|---|---|---|
+| 1 | (a registrar no push) | `durationMinutes`/`workWindow` em `SERVICES`, `generateSlotsForDay` em `src/lib/availability.ts` (ainda não conectada à UI) |
+
+### Relatório da Fase 2 — o que mudou na prática
+
+**Antes:** `SERVICES` só sabia os horários fixos de cada serviço, sem
+duração real nem expediente — impossível cruzar corretamente com eventos
+de uma agenda.
+**Agora:** cada serviço tem duração real e expediente (janela de início),
+e existe uma função pura (`generateSlotsForDay`) que já sabe calcular os
+horários de início válidos cruzando isso com uma lista de intervalos
+ocupados — mas nada na UI foi trocado ainda (`slots`/`isTaken` continuam
+sendo o que aparece pro visitante). Zero mudança visível no site.
+**Para validar:** nenhum cenário visual ainda — a lógica só entra em uso
+na Fase 3. Conferido manualmente que, pro Premium (10:00–20:00, 60min),
+um evento de 12:00–13:00 bloqueia até 13:00 e libera de novo só a partir
+das 13:30 (60min de sessão + 30min de folga depois do evento).
 
 ### Fase 3 — Wiring completo no widget
 
@@ -230,8 +251,9 @@ nos 3 serviços, em PT e EN.
 ## Checks de Validação
 
 ### Cenário 1 — Rota de API devolve dados reais (Fase 1)
-- [ ] Com env vars reais configuradas (as 3 agendas em `GOOGLE_CALENDAR_IDS`), chamar `/api/availability?year=2026&month=7`
-- [ ] Criar um evento de teste em cada uma das 3 agendas (Air BnB, Terraço, Gabinete Faro) e confirmar que os 3 aparecem juntos em `busy`
+- [x] Com env vars reais configuradas (as 3 agendas em `GOOGLE_CALENDAR_IDS`), chamar `/api/availability?year=2026&month=7`
+- **Validado em:** 31/07/2026 — rota chamada localmente com credenciais reais, devolveu 4 intervalos `busy` já combinados das agendas reais da Lúcia, sem erro
+- [ ] Criar um evento de teste isolado em cada uma das 3 agendas (Air BnB, Terraço, Gabinete Faro) e confirmar que os 3 aparecem juntos em `busy` (o teste acima usou eventos já existentes nas agendas, não um evento controlado por agenda — vale revalidar assim na Fase 4)
 - [ ] Confirmar que sem credencial/agenda compartilhada a rota devolve erro claro (HTTP 500/502 + `{ error }`), não trava
 
 ### Cenário 2 — Slots dinâmicos corretos (Fase 2/3)
