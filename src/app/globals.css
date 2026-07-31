@@ -335,6 +335,29 @@ section{ padding:110px 0; }
 .cal-day.selected::after{ background:#fff; }
 .cal-day.full{ color:rgba(239,230,210,0.18); text-decoration:line-through;}
 
+.slots{ margin-top:22px;}
+.slots-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:12px;}
+.slot{
+  text-align:center; padding:10px 6px; border:1px solid var(--line); border-radius:3px;
+  font-family:var(--font-space-mono), monospace; font-size:13px; color:var(--parchment-dim); cursor:pointer;
+}
+.slot:hover{ border-color:var(--gold); color:var(--parchment);}
+.slot.selected{ background:var(--signal); color:var(--ink); border-color:var(--signal); font-weight:700;}
+.slot.taken{ opacity:0.3; text-decoration:line-through; cursor:not-allowed;}
+.empty-hint{ font-size:13px; color:var(--parchment-dim); font-style:italic; margin-top:10px;}
+
+.contact-form{ margin-top:28px; display:grid; gap:12px; grid-template-columns:1fr 1fr;}
+.contact-form input, .contact-form textarea{
+  grid-column:span 2;
+  background:var(--ink-soft); border:1px solid var(--line); color:var(--parchment);
+  padding:11px 13px; border-radius:3px; font-family:var(--font-manrope),sans-serif; font-size:13.5px;
+}
+.contact-form input:nth-child(1), .contact-form input:nth-child(2){ grid-column:span 1;}
+.contact-form input::placeholder, .contact-form textarea::placeholder{ color:rgba(239,230,210,0.35);}
+.contact-form textarea{ resize:vertical; min-height:60px;}
+.confirm-btn{ grid-column:span 2; margin-top:6px;}
+.booking-msg{ margin-top:14px; font-size:13px; color:var(--signal);}
+
 /* TESTIMONIAL / SOCIAL */
 .social{
   background:var(--ink);

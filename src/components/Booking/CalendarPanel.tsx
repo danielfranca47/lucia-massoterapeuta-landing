@@ -20,7 +20,7 @@ export default function CalendarPanel({ state, dispatch, service }: Props) {
   const cells = getMonthGrid(year, month, service, state.serviceKey);
 
   return (
-    <div className="booking-right">
+    <>
       <h3>{t.booking.step2Title}</h3>
       <p>{t.booking.step2Sub}</p>
 
@@ -68,8 +68,6 @@ export default function CalendarPanel({ state, dispatch, service }: Props) {
           );
         })}
       </div>
-
-      {/* Horários, dica de estado vazio e formulário entram na Fase 4 */}
-    </div>
+    </>
   );
 }
