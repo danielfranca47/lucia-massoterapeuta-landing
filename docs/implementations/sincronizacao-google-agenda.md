@@ -242,7 +242,7 @@ nos 3 serviços, em PT e EN.
 
 | # | Commit | O que foi implementado |
 |---|---|---|
-| 1 | (a registrar no push) | Wiring completo: fetch de disponibilidade real no `BookingWidget`, `CalendarPanel`/`SlotsGrid` usando `generateSlotsForDay`, `DEMO_TODAY`/`INITIAL_MONTH` viram data real, `slots`/`isTaken` removidos, textos de loading/erro no dicionário |
+| 1 | `e350cfb` | Wiring completo: fetch de disponibilidade real no `BookingWidget`, `CalendarPanel`/`SlotsGrid` usando `generateSlotsForDay`, `DEMO_TODAY`/`INITIAL_MONTH` viram data real, `slots`/`isTaken` removidos, textos de loading/erro no dicionário |
 
 ### Relatório da Fase 3 — o que mudou na prática
 
