@@ -128,6 +128,22 @@ corretos, arquivo original preservado como referência.
 | `src/app/layout.tsx` | `next/font/google` (Fraunces/Manrope/Space Mono) |
 | `src/app/page.tsx` | placeholder mínimo pra validar cores/fontes |
 
+### Commits Fase 1
+
+| # | Commit | O que foi implementado |
+|---|---|---|
+| 1 | `2901a0c` | scaffold Next.js+TS, tokens/resets em globals.css, fontes via next/font, legacy/, .gitignore mesclado |
+
+### Relatório da Fase 1 — o que mudou na prática
+
+**Antes:** o projeto não tinha build, TypeScript nem estrutura de pastas —
+só o `.html` único.
+**Agora:** existe um projeto Next.js + TypeScript funcional (`npm run dev`),
+com as cores/variáveis (`--ink`, `--ember`, `--gold` etc.) e as 3 fontes
+(Fraunces, Manrope, Space Mono) portadas e validadas visualmente contra o
+arquivo original, que passou a viver em `legacy/` como referência.
+**Para validar:** Cenário 1, abaixo.
+
 ### Fase 2 — Seções estáticas + i18n tipado
 
 **Objetivo:** todas as seções não-interativas renderizando com paridade
@@ -180,8 +196,12 @@ ajuste final do `.gitignore`, remover este arquivo de implementação.
 ## Checks de Validação
 
 ### Cenário 1 — Fase 1: esqueleto sobe corretamente
-- [ ] `npm run dev` sobe sem erro
-- [ ] Cor de fundo e fontes conferem lado a lado com `legacy/lucia-massoterapeuta.html`
+- [x] `npm run dev` sobe sem erro
+- [x] Cor de fundo e fontes conferem lado a lado com `legacy/lucia-massoterapeuta.html`
+- **Validado em:** 31/07/2026 — `npm run dev` sem erros/warnings no console,
+  `tsc --noEmit` e `npm run lint` limpos, comparação visual via Chrome
+  DevTools MCP (fundo `--ink`, serifada Fraunces com itálico correto,
+  eyebrow em Space Mono com o mesmo traço/cor) confere com o original
 
 ### Cenário 2 — Fase 2: paridade visual das seções estáticas
 - [ ] Todas as seções estáticas renderizam com paridade visual do `legacy/`
