@@ -47,7 +47,7 @@ const pt = {
         note: "Vagas limitadas / dia",
       },
       sunset: {
-        price: "35 €",
+        price: "55 €",
         loc: "Olhão · fim-de-semana",
         sub: "RITUAL DE PÔR DO SOL · 30 MIN",
         title: "Sunset Amazon Massage",

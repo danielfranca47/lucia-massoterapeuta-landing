@@ -45,7 +45,7 @@ const en: Dictionary = {
         note: "Limited daily slots",
       },
       sunset: {
-        price: "35 €",
+        price: "55 €",
         loc: "Olhão · weekends",
         sub: "SUNSET RITUAL · 30 MIN",
         title: "Sunset Amazon Massage",

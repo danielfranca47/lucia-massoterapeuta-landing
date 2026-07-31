@@ -21,7 +21,7 @@ export const SERVICES: Services = {
   },
   sunset: {
     name: { pt: "Sunset Amazon Massage — Olhão", en: "Sunset Amazon Massage — Olhão" },
-    price: 35,
+    price: 55,
     location: { pt: "Terraço, Olhão", en: "Terrace, Olhão" },
     days: [5, 6, 0],
     slots: ["19:30", "20:00"],
