@@ -191,6 +191,32 @@ A pré-seleção real será ligada na Fase 3, quando o `BookingWidget` existir.
 | `src/app/globals.css` | CSS de `.booking-panel`, `.service-select`, `.cal-*` |
 | `src/components/Services.tsx` | botões "Reservar" passam a pré-selecionar o serviço no widget (ligação combinada na Fase 2), não só rolar até `#reservar` |
 
+### Commits Fase 3
+
+| # | Commit | O que foi implementado |
+|---|---|---|
+| 1 | `91126ee` | SERVICES tipado, motor do calendário, BookingWidget/ServiceSelect/CalendarPanel, pré-seleção via BookingSelectionContext, CSS do painel de agendamento |
+
+### Relatório da Fase 3 — o que mudou na prática
+
+**Antes:** `#reservar` era uma seção vazia (placeholder da Fase 2).
+**Agora:** a seção de agendamento tem o painel completo de seleção — os 3
+serviços, o calendário do mês com dias disponíveis/lotados/passados
+(mesma lógica pseudo-aleatória determinística do original), navegação entre
+meses, e um resumo que já mostra serviço/local/total assim que um serviço é
+escolhido (data e hora continuam "—" até a Fase 4 trazer a seleção de
+horário). Os botões "Reservar" dos cards de `Services` agora pré-selecionam
+o serviço certo no widget, em vez de só rolar até a âncora.
+
+**Quirk do original preservado de propósito:** o preço mostrado no card do
+casal dentro do seletor ("85 €/pessoa") é só texto de marketing e é
+diferente do total calculado no resumo ("170 €", o valor real usado pela
+lógica de agendamento) — essa inconsistência já existia no HTML original
+entre a seção de Services e o objeto `SERVICES` do JavaScript; a migração
+manteve o mesmo comportamento, não é bug novo.
+
+**Para validar:** Cenário 3, abaixo.
+
 ### Fase 4 — Agendamento parte B: horários, resumo, formulário, WhatsApp
 
 | Área | O que muda |
@@ -240,10 +266,19 @@ ajuste final do `.gitignore`, remover este arquivo de implementação.
   console do navegador sem erros de hidratação
 
 ### Cenário 3 — Fase 3: calendário e seleção de serviço
-- [ ] Nos 3 serviços × 2 idiomas: selecionar serviço destaca o card
-- [ ] Calendário mostra dias disponíveis/lotados/passados corretamente
-- [ ] Navegação de mês funciona
-- [ ] Resumo mostra serviço/local corretamente
+- [x] Nos 3 serviços × 2 idiomas: selecionar serviço destaca o card
+- [x] Calendário mostra dias disponíveis/lotados/passados corretamente
+- [x] Navegação de mês funciona
+- [x] Resumo mostra serviço/local corretamente
+- **Validado em:** 31/07/2026 — testado via Chrome DevTools MCP: clique no
+  botão "Reservar" do card "Amazon Relax Premium — Casal" pré-selecionou o
+  serviço e rolou até `#reservar`; resumo mostrou "Amazon Relax Premium —
+  Casal" / "Rooftop privado, Olhão" / total "170 €" (vs. "85 €/pessoa" no
+  seletor, quirk esperado); calendário de agosto/2026 mostrou só
+  sex/sáb/dom disponíveis (dias do serviço) com mistura de dias cheios;
+  clique num dia disponível selecionou e formatou a data como "7 ago 2026";
+  navegação `›` avançou corretamente para "SETEMBRO 2026"; `tsc --noEmit`
+  e `npm run lint` limpos, console sem erros
 
 ### Cenário 4 — Fase 4: fluxo completo de reserva
 - [ ] Nos 3 serviços × 2 idiomas: dia → horários → escolher horário → resumo completo
