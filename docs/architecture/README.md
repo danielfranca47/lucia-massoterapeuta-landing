@@ -14,8 +14,9 @@ direto no `CLAUDE.md`, seção "Convenções ao editar" — não aqui.
 
 ## Documentos
 
-> Nenhum ainda — a pasta cresce à medida que implementações forem graduadas
-> (ver `docs/implementations/_processo-graduacao-implementacao.md`).
+| Documento | Cobre |
+|---|---|
+| [`estrutura-frontend.md`](estrutura-frontend.md) | Arquitetura Next.js/TypeScript, motor de agendamento, decisões e quirks preservados da migração do HTML original |
 
 ---
 
