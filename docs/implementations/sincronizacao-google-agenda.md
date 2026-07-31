@@ -178,7 +178,7 @@ API específica.
 | # | Commit | O que foi implementado |
 |---|---|---|
 | 1 | `3d1c130` | dependência `googleapis` + override de `gaxios` (corrige 4 vulnerabilidades altas herdadas), rota `GET /api/availability` (freebusy, sem escrever na agenda) e `.env.example` |
-| 2 | (a registrar no push) | rota e `.env.example` passam de 1 pra 3 agendas (`GOOGLE_CALENDAR_IDS`) — a Lúcia mantém agendas separadas por canal (Air BnB/Terraço/Gabinete Faro); as 3 são consultadas juntas e tratadas como uma disponibilidade única |
+| 2 | `8767419` | rota e `.env.example` passam de 1 pra 3 agendas (`GOOGLE_CALENDAR_IDS`) — a Lúcia mantém agendas separadas por canal (Air BnB/Terraço/Gabinete Faro); as 3 são consultadas juntas e tratadas como uma disponibilidade única |
 
 ### Relatório da Fase 1 — o que mudou na prática
 
