@@ -207,7 +207,7 @@ cruzar com dados de uma agenda.
 
 | # | Commit | O que foi implementado |
 |---|---|---|
-| 1 | (a registrar no push) | `durationMinutes`/`workWindow` em `SERVICES`, `generateSlotsForDay` em `src/lib/availability.ts` (ainda não conectada à UI) |
+| 1 | `8ee7555` | `durationMinutes`/`workWindow` em `SERVICES`, `generateSlotsForDay` em `src/lib/availability.ts` (ainda não conectada à UI) |
 
 ### Relatório da Fase 2 — o que mudou na prática
 
