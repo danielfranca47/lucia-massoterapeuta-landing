@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Fraunces, Manrope, Space_Mono } from "next/font/google";
+import { LangProvider } from "@/i18n/LangProvider";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -32,7 +33,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt" className={`${fraunces.variable} ${manrope.variable} ${spaceMono.variable}`}>
-      <body>{children}</body>
+      <body>
+        <LangProvider>{children}</LangProvider>
+      </body>
     </html>
   );
 }

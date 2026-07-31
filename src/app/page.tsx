@@ -1,15 +1,27 @@
+import Nav from "@/components/Nav";
+import Hero from "@/components/Hero";
+import Thread from "@/components/Thread";
+import Intro from "@/components/Intro";
+import Services from "@/components/Services";
+import Ritual from "@/components/Ritual";
+import Locations from "@/components/Locations";
+import Social from "@/components/Social";
+import Footer from "@/components/Footer";
+
 export default function Home() {
   return (
-    <main className="wrap" style={{ paddingTop: 80, paddingBottom: 80 }}>
-      <div className="eyebrow">MASSOTERAPIA · FARO &amp; OLHÃO</div>
-      <h1 style={{ fontSize: 48, marginTop: 16 }}>
-        Sabedoria da Amazônia, <span className="italic">ao ritmo</span> do
-        pôr do sol algarvio.
-      </h1>
-      <p style={{ marginTop: 16, color: "var(--parchment-dim)" }}>
-        Fase 1 — esqueleto do projeto Next.js + TypeScript. Comparar cores e
-        fontes com <code>legacy/lucia-massoterapeuta.html</code>.
-      </p>
-    </main>
+    <>
+      <Nav />
+      <Hero />
+      <Thread />
+      <Intro />
+      <Services />
+      <Ritual />
+      <Locations />
+      {/* Widget de agendamento entra na Fase 3/4 */}
+      <section id="reservar" />
+      <Social />
+      <Footer />
+    </>
   );
 }
