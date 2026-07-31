@@ -5,6 +5,7 @@ import Intro from "@/components/Intro";
 import Services from "@/components/Services";
 import Ritual from "@/components/Ritual";
 import Locations from "@/components/Locations";
+import BookingWidget from "@/components/Booking/BookingWidget";
 import Social from "@/components/Social";
 import Footer from "@/components/Footer";
 
@@ -18,8 +19,9 @@ export default function Home() {
       <Services />
       <Ritual />
       <Locations />
-      {/* Widget de agendamento entra na Fase 3/4 */}
-      <section id="reservar" />
+      <section className="booking" id="reservar">
+        <BookingWidget />
+      </section>
       <Social />
       <Footer />
     </>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useLang } from "@/i18n/LangProvider";
+import { useBookingSelection } from "@/components/Booking/BookingSelectionContext";
 import type { Dictionary } from "@/i18n/dictionaries/pt";
 
 type ServiceKey = keyof Dictionary["services"]["cards"];
@@ -22,12 +23,9 @@ const CARD_IMAGES: Record<ServiceKey, { src: string; alt: string }> = {
 
 const CARD_ORDER: ServiceKey[] = ["premium", "sunset", "couple"];
 
-function scrollToBooking() {
-  document.getElementById("reservar")?.scrollIntoView({ behavior: "smooth" });
-}
-
 export default function Services() {
   const { t } = useLang();
+  const { requestService } = useBookingSelection();
   const cards = t.services.cards;
 
   return (
@@ -55,11 +53,10 @@ export default function Services() {
                   <p>{card.description}</p>
                   <div className="service-foot">
                     <span className="service-note">{card.note}</span>
-                    {/* Pré-seleção real do serviço no widget é ligada na Fase 3 */}
                     <button
                       className="pick-btn"
                       type="button"
-                      onClick={scrollToBooking}
+                      onClick={() => requestService(key)}
                     >
                       <span>{t.services.bookLabel}</span>
                     </button>

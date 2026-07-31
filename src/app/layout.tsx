@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fraunces, Manrope, Space_Mono } from "next/font/google";
 import { LangProvider } from "@/i18n/LangProvider";
+import { BookingSelectionProvider } from "@/components/Booking/BookingSelectionContext";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -34,7 +35,9 @@ export default function RootLayout({
   return (
     <html lang="pt" className={`${fraunces.variable} ${manrope.variable} ${spaceMono.variable}`}>
       <body>
-        <LangProvider>{children}</LangProvider>
+        <LangProvider>
+          <BookingSelectionProvider>{children}</BookingSelectionProvider>
+        </LangProvider>
       </body>
     </html>
   );
