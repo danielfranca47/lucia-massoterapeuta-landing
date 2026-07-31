@@ -23,7 +23,7 @@ ou `docs/architecture/`, e o arquivo é deletado.
 
 | Arquivo | Status |
 |---|---|
-| *(nenhum ativo no momento)* | — |
+| `migracao-nextjs-typescript.md` | Em andamento — Fase 1 |
 
 ---
 
