@@ -61,7 +61,7 @@ passado, e sem sobrepor `[busy.start − 30min, busy.end + 30min]`.
 
 ```
 Browser (BookingWidget)
-   → fetch /api/availability?serviceKey=premium&year=2026&month=7
+   → fetch /api/availability?year=2026&month=7
 Next.js API route (server, credencial nunca exposta)
    → Google Calendar API: calendar.freebusy.query()
    → devolve só { busy: [{start,end}, ...] } — sem título/detalhe de eventos
@@ -86,25 +86,71 @@ reais da agenda da Lúcia, sem nenhum impacto no site atual.
 | Área | O que muda |
 |---|---|
 | `package.json` | Adiciona dependência `googleapis` |
-| `src/app/api/availability/route.ts` (novo) | `GET`, query params `serviceKey`, `year`, `month`; autentica via Service Account, chama `calendar.freebusy.query` (escopo `calendar.freebusy`), devolve `{ busy: [{start, end}] }`; erro → HTTP 500 + `{ error }` |
+| `src/app/api/availability/route.ts` (novo) | `GET`, query params `year`/`month` (a disponibilidade ocupada é a mesma pra qualquer serviço — quem interpreta por duração/expediente é o front-end na Fase 2/3); autentica via Service Account, chama `calendar.freebusy.query` (escopo `calendar.freebusy`), devolve `{ busy: [{start, end}] }`; erro → HTTP 500/502 + `{ error }` |
 | `.env.example` (novo, comitado) | Documenta `GOOGLE_CALENDAR_ID`, `GOOGLE_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` (placeholders) |
 | `.env.local` (não comitado) | Valores reais para dev local |
 
-**Passo externo (manual, fora do editor):**
-1. Criar um projeto no [Google Cloud Console](https://console.cloud.google.com/).
-2. Ativar a **Google Calendar API** nesse projeto.
-3. Criar uma **Service Account**, gerar uma chave JSON.
-4. Na [Google Agenda](https://calendar.google.com/) da Lúcia: Configurações
-   → agenda dela → "Compartilhar com pessoas específicas" → adicionar o
-   e-mail da Service Account com permissão **"Ver apenas informações de
-   disponibilidade (ocupado/livre)"** (a mais restrita — não dá acesso a
-   título/detalhe dos eventos).
-5. Anotar: o **ID da agenda** (normalmente o próprio e-mail do Google da
-   Lúcia, em Configurações → "Integrar agenda"), o **e-mail da Service
-   Account** e a **chave privada** da chave JSON gerada.
-6. Preencher essas 3 variáveis em `.env.local` (copiar de `.env.example`) e,
-   quando o site for pro Vercel, também em Project Settings → Environment
-   Variables.
+**Passo externo (manual, fora do editor) — roteiro recomendado**
+
+Princípio: o projeto no Google Cloud fica na **conta da Lúcia** (é
+infraestrutura do negócio dela), e o Daniel é adicionado como colaborador
+via IAM — ele nunca recebe a senha dela, e ela nunca precisa mexer em nada
+técnico além de um clique de compartilhamento no fim. A chave secreta
+gerada é vista só pelo Daniel.
+
+*Parte A — a Lúcia faz (é dona do projeto):*
+1. Entrar em [console.cloud.google.com](https://console.cloud.google.com/)
+   com a conta Google que ela já usa pro Google Agenda (aceitar os termos,
+   se for a primeira vez).
+2. No seletor de projeto (topo da página) → **"Novo projeto"** → nome
+   sugerido `lucia-massoterapeuta-agenda` → **Criar**.
+3. Menu ☰ → **"IAM e administrador"** → **"IAM"** → **"Conceder acesso"** →
+   colar o e-mail Google do Daniel → papel **"Editor"** → **Salvar**.
+   (Isso dá acesso só a esse projeto específico, não à conta dela, ao
+   Gmail ou à Agenda em si.)
+
+*Parte B — o Daniel faz (agora com acesso ao projeto dela):*
+4. Selecionar o projeto que ela criou (seletor de projeto, topo da página).
+5. **"APIs e serviços" → "Biblioteca"** → buscar **"Google Calendar API"**
+   → **Ativar**.
+6. **"APIs e serviços" → "Credenciais" → "Criar credenciais" → "Conta de
+   serviço"** → nome sugerido `site-agendamento` → **"Criar e continuar"**
+   → pode pular a etapa de papéis de projeto (não precisa) → **Concluído**.
+7. Abrir a Service Account recém-criada → aba **"Chaves"** → **"Adicionar
+   chave" → "Criar nova chave"** → tipo **JSON** → **Criar** (baixa um
+   arquivo `.json` — essa é a chave secreta, guardar com cuidado, não
+   compartilhar por e-mail/WhatsApp em texto aberto).
+8. Anotar o e-mail da Service Account, visível na tela (formato
+   `nome@id-do-projeto.iam.gserviceaccount.com`).
+
+*Parte C — a Lúcia faz de novo (só isso, sem tocar em Cloud Console):*
+9. Abrir [calendar.google.com](https://calendar.google.com/) → engrenagem
+   ⚙ → escolher a agenda dela na lista à esquerda → **"Configurações e
+   compartilhamento"** → **"Compartilhar com pessoas específicas" →
+   "Adicionar pessoas"** → colar o e-mail da Service Account (passo 8) →
+   permissão **"Ver apenas informações de disponibilidade (ocupado/livre)"**
+   (a mais restrita da lista — não dá acesso a título/detalhe dos eventos)
+   → **Enviar**.
+10. Na mesma tela de configurações da agenda, seção **"Integrar agenda"**
+    → copiar o **"ID da agenda"** (normalmente é o próprio e-mail Gmail
+    dela) e passar pro Daniel.
+
+*Parte D — o Daniel finaliza (local + Vercel):*
+11. Abrir o `.json` baixado no passo 7: `client_email` vira
+    `GOOGLE_SERVICE_ACCOUNT_EMAIL`, `private_key` vira
+    `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` (colar com as quebras de linha
+    como `\n` literais, numa linha só — igual ao exemplo em
+    `.env.example`), e o ID do passo 10 vira `GOOGLE_CALENDAR_ID`.
+12. Copiar `.env.example` para `.env.local` (não comitado) e preencher os
+    3 valores, pra testar localmente.
+13. Quando o site for pro Vercel: as mesmas 3 variáveis em Project
+    Settings → Environment Variables.
+14. Apagar o `.json` baixado da pasta de Downloads depois de copiar os
+    valores — não precisa ficar solto no disco depois de usado.
+
+**Custo:** gratuito — a cota gratuita do Google Calendar API cobre bem
+esse volume de uso; normalmente não pede conta de faturamento pra essa
+API específica.
 
 ### Commits Fase 1
 
@@ -162,7 +208,7 @@ nos 3 serviços, em PT e EN.
 ## Checks de Validação
 
 ### Cenário 1 — Rota de API devolve dados reais (Fase 1)
-- [ ] Com env vars reais configuradas, chamar `/api/availability?serviceKey=premium&year=2026&month=7`
+- [ ] Com env vars reais configuradas, chamar `/api/availability?year=2026&month=7`
 - [ ] Confirmar que os intervalos `busy` batem com eventos reais na agenda da Lúcia
 - [ ] Confirmar que sem credencial/agenda compartilhada a rota devolve erro claro (HTTP 500 + `{ error }`), não trava
 
