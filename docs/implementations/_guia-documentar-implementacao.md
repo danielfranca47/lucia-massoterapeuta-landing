@@ -37,9 +37,9 @@ no fim do `<body>`) e verificar se algo parecido já existe. Citar o trecho.
   footer)?
 - Tem impacto no motor de agendamento (`SERVICES`, `renderCalendar`,
   `selectDay`, `submitBooking`)? Se sim, testar os 3 serviços, não só um.
-- É uma mudança que empurra o protótipo pra produção (ex.: número de
-  WhatsApp real, integração com agenda real)? Marcar isso explicitamente no
-  plano — ver seção "Do protótipo à produção" no `CLAUDE.md`.
+- É uma mudança que resolve uma limitação conhecida do estágio atual do
+  site (ex.: dado ainda placeholder, comportamento ainda simulado)? Marcar
+  isso explicitamente no plano.
 
 ### 3. Riscos e dependências
 

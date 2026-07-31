@@ -107,30 +107,10 @@ em `.env.local` (não comitado) e nas Environment Variables do Vercel — ver
 `.env.example` pro formato esperado e `docs/architecture/estrutura-frontend.md`
 pro passo a passo de gerar essas credenciais.
 
-O footer ainda rotula a página como `"Página de demonstração — protótipo"`
-— a disponibilidade já é real, mas o aviso permanece até as fotos
-definitivas serem confirmadas com a Lúcia (ver "Do protótipo à produção").
-
-## Do protótipo à produção
-
-Antes de divulgar a página para clientes reais, pelo menos isto precisa ser
-resolvido (registrar cada um como uma implementação em
-`docs/implementations/` quando for endereçado):
-
-1. ~~**`WHATSAPP_NUMBER` real**~~ — resolvido: `351966897721` em
-   `src/lib/whatsapp.ts`.
-2. ~~**Disponibilidade real**~~ — resolvido: sincronizada com as 3 agendas
-   do Google Calendar da Lúcia (ver "Motor de agendamento" acima e
-   `docs/architecture/estrutura-frontend.md`).
-3. **Remover o aviso de protótipo** do footer quando a página estiver pronta
-   para publicar.
-4. **Fotos reais** — as 5 fotos atuais (`public/images/`) vieram do
-   protótipo original; confirmar com a Lúcia se são as definitivas.
-
-O projeto está em Next.js (App Router) justamente por causa do item 2:
-escrever/ler credenciais de agenda exige uma rota de API server-side
-(`src/app/api/.../route.ts`), que não existiria num bundler puramente
-client-side. Essa rota já existe (`src/app/api/availability/route.ts`).
+A página está publicada e em produção (`lucia-massoterapeuta-landing.vercel.app`,
+Vercel) com disponibilidade real — não há mais aviso de protótipo/demonstração
+no footer. As 5 fotos atuais (`public/images/`) são as definitivas por ora;
+se a Lúcia trocar alguma no futuro, é só substituir o arquivo correspondente.
 
 ## Contato / dados de negócio
 

@@ -165,7 +165,6 @@ const en: Dictionary = {
     standardsHeading: "STANDARDS",
     standardsDgs: "Sessions follow DGS standards.",
     standardsDgert: "DGERT-certified training.",
-    prototypeNotice: "Demo page — prototype",
   },
 };
 

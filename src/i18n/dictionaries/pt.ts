@@ -167,7 +167,6 @@ const pt = {
     standardsHeading: "NORMAS",
     standardsDgs: "Sessões segundo as normas da DGS.",
     standardsDgert: "Formação certificada DGERT.",
-    prototypeNotice: "Página de demonstração — protótipo",
   },
 };
 

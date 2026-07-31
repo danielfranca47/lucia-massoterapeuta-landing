@@ -40,7 +40,6 @@ export default function Footer() {
       </div>
       <div className="wrap footer-bottom">
         <span>© 2026 Lúcia Massoterapeuta</span>
-        <span>{t.footer.prototypeNotice}</span>
       </div>
     </footer>
   );
