@@ -110,7 +110,7 @@ reais da agenda da Lúcia, sem nenhum impacto no site atual.
 
 | # | Commit | O que foi implementado |
 |---|---|---|
-| 1 | (a registrar no push) | dependência `googleapis` + override de `gaxios` (corrige 4 vulnerabilidades altas herdadas), rota `GET /api/availability` (freebusy, sem escrever na agenda) e `.env.example` |
+| 1 | `3d1c130` | dependência `googleapis` + override de `gaxios` (corrige 4 vulnerabilidades altas herdadas), rota `GET /api/availability` (freebusy, sem escrever na agenda) e `.env.example` |
 
 ### Relatório da Fase 1 — o que mudou na prática
 
