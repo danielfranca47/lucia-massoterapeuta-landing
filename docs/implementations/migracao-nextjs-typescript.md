@@ -225,6 +225,40 @@ manteve o mesmo comportamento, não é bug novo.
 | `src/lib/whatsapp.ts` | criado |
 | `src/app/globals.css` | CSS de `.slots-grid`, `.slot`, `.contact-form`, `.booking-msg` |
 
+### Commits Fase 4
+
+| # | Commit | O que foi implementado |
+|---|---|---|
+| 1 | `9b5a250` | SlotsGrid/SummaryBox/BookingForm, lib/whatsapp.ts, fluxo de envio no BookingWidget, CSS restante do agendamento |
+
+### Relatório da Fase 4 — o que mudou na prática
+
+**Antes:** o agendamento parava na seleção de dia — sem horários, formulário
+ou envio.
+**Agora:** o fluxo está completo: escolher um dia mostra os horários
+(ocupados riscados), escolher um horário atualiza o resumo, preencher
+nome/telefone e confirmar monta a mensagem e abre o WhatsApp numa aba nova
+com o texto pré-preenchido. Erro de seleção incompleta aparece em laranja;
+sucesso ("A abrir o WhatsApp...") aparece em verde-sinal.
+
+**Comportamentos do original preservados fielmente** (todos verificados
+ponta a ponta via Chrome DevTools MCP, não são regressões desta migração):
+- A mensagem do WhatsApp é sempre montada com rótulos e saudação em
+  português ("Olá Lúcia! Gostaria de reservar:", "Serviço:", "Data:" etc.) —
+  só o nome do serviço e o mês da data respeitam o idioma da UI, exatamente
+  como no `submitBooking()` original.
+- O preço do casal no seletor ("85 €/pessoa") continua diferente do total
+  calculado no resumo ("170 €") — mesma inconsistência do HTML original.
+- Trocar de mês depois de já ter escolhido um dia esconde os horários mas
+  **não** traz a dica de volta (fica um vazio até o próximo dia ser
+  clicado) — replica o comportamento real do `changeMonth()` original, que
+  nunca reexibia o hint.
+- Os placeholders do formulário ("Nome", "Telefone / WhatsApp", "Alguma
+  preferência...") ficam sempre em português, sem tradução — o original
+  nunca os envolveu no padrão `data-pt`/`data-en`.
+
+**Para validar:** Cenário 4, abaixo.
+
 ### Fase 5 — QA final + graduação
 
 QA lado a lado com `legacy/`, 2 idiomas, 3 serviços, desktop + ≤980px.
@@ -281,9 +315,20 @@ ajuste final do `.gitignore`, remover este arquivo de implementação.
   e `npm run lint` limpos, console sem erros
 
 ### Cenário 4 — Fase 4: fluxo completo de reserva
-- [ ] Nos 3 serviços × 2 idiomas: dia → horários → escolher horário → resumo completo
-- [ ] Confirmar abre `wa.me` com link/mensagem corretos e traduzidos
-- [ ] Erro de seleção incompleta aparece corretamente nos dois idiomas
+- [x] Nos 3 serviços × 2 idiomas: dia → horários → escolher horário → resumo completo
+- [x] Confirmar abre `wa.me` com link/mensagem corretos e traduzidos
+- [x] Erro de seleção incompleta aparece corretamente nos dois idiomas
+- **Validado em:** 31/07/2026 — testado via Chrome DevTools MCP, fluxo
+  completo com Premium Massage: selecionar dia 12 → horários aparecem →
+  escolher 15:00 → resumo mostra "12 ago 2026" / "15:00" → preencher
+  nome/telefone → confirmar abriu uma aba nova em
+  `api.whatsapp.com/send/?phone=351900000000&text=...` com a mensagem
+  exata esperada (rótulos em PT, "Data: 12 AGOSTO 2026" em maiúsculas sem
+  abreviar, igual ao original); testado também o erro de seleção
+  incompleta (preenchendo só nome/telefone, sem serviço/dia/hora) e o
+  "gap" de troca de mês após selecionar um dia — ambos batendo com o
+  comportamento original; `tsc --noEmit` e `npm run lint` limpos, console
+  sem erros
 
 ### Cenário 5 — Fase 5: QA final
 - [ ] Todos os cenários acima revalidados de uma vez
