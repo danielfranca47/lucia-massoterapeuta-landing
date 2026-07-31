@@ -1,0 +1,59 @@
+:root{
+  --ink:#15140f;
+  --ink-soft:#242019;
+  --ember:#c9612b;
+  --ember-deep:#9c4a20;
+  --amazon:#233c2b;
+  --amazon-deep:#152619;
+  --gold:#e3ac54;
+  --parchment:#efe6d2;
+  --parchment-dim:#e2d7bc;
+  --signal:#c6ff3d;
+  --signal-dim:#9fd62f;
+  --line: rgba(239,230,210,0.16);
+  --shadow: 0 20px 60px rgba(0,0,0,0.35);
+  --maxw: 1180px;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0;
+  background:var(--ink);
+  color:var(--parchment);
+  font-family:var(--font-manrope), sans-serif;
+  font-size:16px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+img{max-width:100%;display:block;}
+a{color:inherit;}
+.wrap{max-width:var(--maxw); margin:0 auto; padding:0 28px;}
+.eyebrow{
+  font-family:var(--font-space-mono), monospace;
+  font-size:12.5px;
+  letter-spacing:0.16em;
+  text-transform:uppercase;
+  color:var(--gold);
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.eyebrow::before{
+  content:"";
+  width:22px; height:1px;
+  background:var(--signal);
+  display:inline-block;
+}
+h1,h2,h3{font-family:var(--font-fraunces), serif; font-weight:500; margin:0; letter-spacing:-0.01em;}
+.italic{font-style:italic; font-weight:400;}
+p{margin:0;}
+
+/* thread motif - echoes the hammock's crochet net, used sparingly as signature divider */
+.thread{
+  position:relative;
+  height:34px;
+  margin: 0 auto;
+  max-width:var(--maxw);
+  padding:0 28px;
+}
+.thread svg{width:100%; height:100%; display:block; opacity:0.75;}
