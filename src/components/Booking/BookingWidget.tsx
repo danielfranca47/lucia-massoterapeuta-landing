@@ -4,6 +4,7 @@ import { useEffect, useReducer, useState } from "react";
 import { useLang } from "@/i18n/LangProvider";
 import { SERVICES, type ServiceKey } from "@/data/services";
 import { formatSummaryDate } from "@/lib/calendar";
+import { generateSlotsForDay, type BusyInterval } from "@/lib/availability";
 import { buildBookingMessage, buildWhatsAppUrl } from "@/lib/whatsapp";
 import { useBookingSelection } from "./BookingSelectionContext";
 import ServiceSelect from "./ServiceSelect";
@@ -28,8 +29,22 @@ export type BookingAction =
   | { type: "SELECT_DAY"; day: number }
   | { type: "SELECT_SLOT"; slot: string };
 
-// Agosto/2026 — mesmo mês inicial do protótipo original
-const INITIAL_MONTH = new Date(2026, 7, 1);
+function currentMonthStart(): Date {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), 1);
+}
+
+const INITIAL_MONTH = currentMonthStart();
+
+interface AvailabilityState {
+  status: "error" | "ready";
+  monthKey: string;
+  busy: BusyInterval[];
+}
+
+function monthKeyOf(date: Date): string {
+  return `${date.getFullYear()}-${date.getMonth()}`;
+}
 
 // Texto do hint antes de qualquer serviço ser escolhido: fica sempre em
 // português no original (não tem par data-pt/data-en, ao contrário do texto
@@ -80,6 +95,7 @@ export default function BookingWidget() {
   const { lang, t } = useLang();
   const [state, dispatch] = useReducer(bookingReducer, initialState);
   const [message, setMessage] = useState<{ text: string; tone: "error" | "success" } | null>(null);
+  const [availability, setAvailability] = useState<AvailabilityState>({ status: "ready", monthKey: "", busy: [] });
   const { requestedService, clearRequest } = useBookingSelection();
 
   // Pré-seleciona o serviço quando um card de Services pede reserva
@@ -90,12 +106,60 @@ export default function BookingWidget() {
     }
   }, [requestedService, clearRequest]);
 
+  // Busca a disponibilidade real (Google Agenda) do mês visível — a mesma
+  // pra qualquer serviço, então depende só do mês, não do serviço escolhido.
+  // "Carregando" é derivado (monthKey do último fetch concluído ainda não
+  // bate com o mês visível), não um setState síncrono no início do efeito.
+  useEffect(() => {
+    let cancelled = false;
+    const year = state.currentMonth.getFullYear();
+    const month = state.currentMonth.getMonth();
+    const monthKey = monthKeyOf(state.currentMonth);
+    fetch(`/api/availability?year=${year}&month=${month}`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Falha ao consultar disponibilidade");
+        return res.json() as Promise<{ busy: BusyInterval[] }>;
+      })
+      .then((data) => {
+        if (!cancelled) setAvailability({ status: "ready", monthKey, busy: data.busy });
+      })
+      .catch(() => {
+        if (!cancelled) setAvailability({ status: "error", monthKey, busy: [] });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [state.currentMonth]);
+
+  const isAvailabilityLoading = availability.monthKey !== monthKeyOf(state.currentMonth);
+  const availabilityStatus: "loading" | "error" | "ready" = isAvailabilityLoading ? "loading" : availability.status;
+
   const service = state.serviceKey ? SERVICES[state.serviceKey] : null;
   const monthLabel = t.booking.monthNames[state.currentMonth.getMonth()];
   const summaryDate =
     service && state.selectedDay
       ? formatSummaryDate(state.selectedDay, monthLabel, state.currentMonth.getFullYear())
       : t.booking.summary.empty;
+
+  const selectedDate =
+    state.selectedDay !== null
+      ? new Date(state.currentMonth.getFullYear(), state.currentMonth.getMonth(), state.selectedDay)
+      : null;
+  const availableSlots =
+    service && selectedDate && availabilityStatus === "ready"
+      ? generateSlotsForDay(service, selectedDate, availability.busy)
+      : [];
+
+  let rightPanelHint: string | null = null;
+  let rightPanelHintTone: "normal" | "error" = "normal";
+  if (service && availabilityStatus === "loading") {
+    rightPanelHint = t.booking.loadingAvailability;
+  } else if (service && availabilityStatus === "error") {
+    rightPanelHint = t.booking.availabilityError;
+    rightPanelHintTone = "error";
+  } else if (state.hintVisible) {
+    rightPanelHint = state.hintMode === "initial" ? EMPTY_HINT_INITIAL_PT : t.booking.emptyHintServiceChosen;
+  }
 
   function handleFormSubmit(values: { name: string; phone: string; note: string }) {
     if (!service || !state.serviceKey || !state.selectedDay || !state.selectedSlot) {
@@ -137,21 +201,28 @@ export default function BookingWidget() {
         </div>
 
         <div className="booking-right">
-          <CalendarPanel state={state} dispatch={dispatch} service={service} />
+          <CalendarPanel
+            state={state}
+            dispatch={dispatch}
+            service={service}
+            busy={availability.busy}
+            availabilityReady={availabilityStatus === "ready"}
+          />
 
-          {state.slotsVisible && service && state.serviceKey && state.selectedDay && (
+          {state.slotsVisible && service && state.selectedDay && (
             <SlotsGrid
-              service={service}
-              serviceKey={state.serviceKey}
-              day={state.selectedDay}
+              slots={availableSlots}
               selectedSlot={state.selectedSlot}
               onSelect={(slot) => dispatch({ type: "SELECT_SLOT", slot })}
             />
           )}
 
-          {state.hintVisible && (
-            <p className="empty-hint">
-              {state.hintMode === "initial" ? EMPTY_HINT_INITIAL_PT : t.booking.emptyHintServiceChosen}
+          {rightPanelHint && (
+            <p
+              className="empty-hint"
+              style={rightPanelHintTone === "error" ? { color: "var(--ember)" } : undefined}
+            >
+              {rightPanelHint}
             </p>
           )}
 

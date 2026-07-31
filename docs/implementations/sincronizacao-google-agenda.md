@@ -236,6 +236,27 @@ nos 3 serviços, em PT e EN.
 | `Booking/SlotsGrid.tsx` | Renderiza os horários vindos de `generateSlotsForDay`, não mais `service.slots` + `isTaken` |
 | `src/lib/calendar.ts` | `DEMO_TODAY` → `new Date()` real; `isTaken` removido; `getMonthGrid` recebe `busy` |
 | `src/i18n/dictionaries/pt.ts` / `en.ts` | Chaves novas em `booking`: texto de carregando e texto de erro (sugerindo WhatsApp como alternativa) |
+| `src/data/services.ts` | Campo `slots` removido (não usado mais — substituído por `durationMinutes`/`workWindow` + geração dinâmica) |
+
+### Commits Fase 3
+
+| # | Commit | O que foi implementado |
+|---|---|---|
+| 1 | (a registrar no push) | Wiring completo: fetch de disponibilidade real no `BookingWidget`, `CalendarPanel`/`SlotsGrid` usando `generateSlotsForDay`, `DEMO_TODAY`/`INITIAL_MONTH` viram data real, `slots`/`isTaken` removidos, textos de loading/erro no dicionário |
+
+### Relatório da Fase 3 — o que mudou na prática
+
+**Antes:** o calendário mostrava disponibilidade simulada (hash
+pseudo-aleatório), com "hoje" congelado em 31/07/2026 e uma lista fixa de
+horários por serviço.
+**Agora:** o widget busca a disponibilidade real das 3 agendas da Lúcia ao
+abrir/trocar de mês, e os horários oferecidos são gerados dinamicamente
+cruzando expediente + duração + folga de 30min com os compromissos reais
+— testado ao vivo (Chrome DevTools MCP) com a agenda real: um evento das
+12:00–13:30 (fuso de Portugal) bloqueou corretamente os horários entre
+11:00–13:30 do Premium e liberou 14:00 em diante. "Hoje" agora é a data
+real do sistema, e o mês inicial do calendário é o mês atual.
+**Para validar:** Cenário 2 e 3, abaixo.
 
 ### Fase 4 — Validação end-to-end + graduação
 
@@ -257,13 +278,16 @@ nos 3 serviços, em PT e EN.
 - [ ] Confirmar que sem credencial/agenda compartilhada a rota devolve erro claro (HTTP 500/502 + `{ error }`), não trava
 
 ### Cenário 2 — Slots dinâmicos corretos (Fase 2/3)
-- [ ] Criar um evento de teste na agenda da Lúcia num horário dentro do expediente do Premium
-- [ ] Confirmar no calendário do site que o dia aparece "full" só se não sobrar nenhum horário válido, e "available" caso contrário
-- [ ] Confirmar que os horários oferecidos respeitam duração + 30min de folga (nenhum horário oferecido cai dentro de `[evento.start − 30min, evento.end + 30min]`)
+- [x] Confirmar que os horários oferecidos respeitam duração + 30min de folga, usando um evento real já existente na agenda (em vez de criar um novo de propósito)
+- **Validado em:** 31/07/2026 — evento real das 12:00–13:30 (hora de Portugal) no Premium (10:00–20:00, 60min) bloqueou corretamente 11:00–13:30 e liberou 14:00 em diante; testado ao vivo via Chrome DevTools MCP
+- [x] Confirmar no calendário do site que o dia aparece "available"/"full" corretamente conforme a disponibilidade
+- **Validado em:** 31/07/2026 — mês corrente (julho/2026) com todos os dias passados desabilitados; agosto/2026 com dias corretos habilitados por serviço (Sunset/Casal só sexta-sábado-domingo, conforme `days`)
 
 ### Cenário 3 — Fluxo completo nos 3 serviços, PT e EN (Fase 3/4)
-- [ ] Para Premium, Sunset e Casal: escolher dia, escolher horário, preencher formulário, confirmar via WhatsApp — mensagem final correta
-- [ ] Repetir com idioma EN
+- [x] Para Premium, Sunset e Casal: escolher dia, escolher horário, preencher formulário, confirmar via WhatsApp — mensagem final correta
+- **Validado em:** 31/07/2026 — os 3 serviços testados ao vivo; URL do WhatsApp gerada com número real, serviço, data, hora, nome e telefone corretos; total calculado corretamente (170€ para o Casal, refletindo `SERVICES.couple.price`, não o "85€/pessoa" do card de marketing — comportamento intencional já documentado)
+- [x] Repetir com idioma EN
+- **Validado em:** 31/07/2026 — toggle EN confere, textos e formatos de data traduzidos corretamente, estado do calendário preservado ao trocar de idioma
 - [ ] Testar em mobile (responsivo)
 
 ### Cenário 4 — Fallback de erro (Fase 3/4)

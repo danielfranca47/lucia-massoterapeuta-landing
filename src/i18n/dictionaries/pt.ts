@@ -129,6 +129,9 @@ const pt = {
     step2Sub: "Pontos verdes indicam vagas disponíveis.",
     slotsLabel: "Horários disponíveis",
     emptyHintServiceChosen: "Escolha um dia disponível no calendário abaixo.",
+    loadingAvailability: "A carregar disponibilidade real...",
+    availabilityError:
+      "Não foi possível carregar a disponibilidade agora. Tente novamente mais tarde ou reserve diretamente por WhatsApp.",
     formSubmit: "Confirmar reserva via WhatsApp",
     incompleteError: "Por favor escolha serviço, dia e hora antes de confirmar.",
     openingWhatsApp: "A abrir o WhatsApp para confirmar a sua reserva...",

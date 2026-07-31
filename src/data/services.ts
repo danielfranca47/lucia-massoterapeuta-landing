@@ -3,11 +3,6 @@ export interface Service {
   price: number;
   location: { pt: string; en: string };
   days: number[]; // 0=dom..6=sáb, mesmo formato de Date#getDay()
-  /** @deprecated Lista fixa do protótipo — substituída por `durationMinutes`
-   * + `workWindow` na sincronização com o Google Agenda (ver
-   * docs/implementations/sincronizacao-google-agenda.md). Ainda usada pela
-   * UI até a Fase 3 dessa implementação trocar pra geração dinâmica. */
-  slots: string[]; // "HH:MM"
   /** Duração real da sessão, em minutos — usada pra cruzar com a agenda. */
   durationMinutes: number;
   /** Expediente do serviço: janela de horários de início possíveis. */
@@ -25,7 +20,6 @@ export const SERVICES: Services = {
     price: 85,
     location: { pt: "Gabinete privado, Faro", en: "Private studio, Faro" },
     days: [1, 2, 3, 4, 5, 6, 0],
-    slots: ["10:00", "12:00", "15:00", "17:00", "19:00"],
     durationMinutes: 60,
     workWindow: { start: "10:00", end: "20:00" },
   },
@@ -34,7 +28,6 @@ export const SERVICES: Services = {
     price: 55,
     location: { pt: "Terraço, Olhão", en: "Terrace, Olhão" },
     days: [5, 6, 0],
-    slots: ["19:30", "20:00"],
     durationMinutes: 30,
     workWindow: { start: "19:30", end: "20:30" },
   },
@@ -43,7 +36,6 @@ export const SERVICES: Services = {
     price: 170,
     location: { pt: "Rooftop privado, Olhão", en: "Private rooftop, Olhão" },
     days: [5, 6, 0],
-    slots: ["18:00", "19:00"],
     durationMinutes: 60,
     workWindow: { start: "18:00", end: "20:00" },
   },

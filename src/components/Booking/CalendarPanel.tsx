@@ -3,6 +3,7 @@
 import type { Dispatch } from "react";
 import { useLang } from "@/i18n/LangProvider";
 import { getMonthGrid } from "@/lib/calendar";
+import type { BusyInterval } from "@/lib/availability";
 import type { Service } from "@/data/services";
 import type { BookingAction, BookingState } from "./BookingWidget";
 
@@ -10,14 +11,19 @@ interface Props {
   state: BookingState;
   dispatch: Dispatch<BookingAction>;
   service: Service | null;
+  busy: BusyInterval[];
+  availabilityReady: boolean;
 }
 
-export default function CalendarPanel({ state, dispatch, service }: Props) {
+export default function CalendarPanel({ state, dispatch, service, busy, availabilityReady }: Props) {
   const { t } = useLang();
   const year = state.currentMonth.getFullYear();
   const month = state.currentMonth.getMonth();
   const monthLabel = `${t.booking.monthNames[month]} ${year}`;
-  const cells = getMonthGrid(year, month, service, state.serviceKey);
+  // Enquanto a disponibilidade real não chegou (ou falhou), a grade não
+  // marca nenhum dia como disponível — nunca mostrar disponibilidade
+  // inventada (ver docs/implementations/sincronizacao-google-agenda.md).
+  const cells = getMonthGrid(year, month, availabilityReady ? service : null, busy);
 
   return (
     <>

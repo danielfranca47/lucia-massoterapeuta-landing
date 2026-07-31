@@ -127,6 +127,9 @@ const en: Dictionary = {
     step2Sub: "Green dots indicate open slots.",
     slotsLabel: "Available times",
     emptyHintServiceChosen: "Choose an available day in the calendar below.",
+    loadingAvailability: "Loading real availability...",
+    availabilityError:
+      "We couldn't load availability right now. Please try again later or book directly via WhatsApp.",
     formSubmit: "Confirm booking via WhatsApp",
     incompleteError: "Please choose a service, day and time before confirming.",
     openingWhatsApp: "Opening WhatsApp to confirm your booking...",
