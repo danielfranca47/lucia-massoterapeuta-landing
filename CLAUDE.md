@@ -14,7 +14,8 @@ página troca de idioma no cliente).
 | `src/components/` | Seções da página (`Nav`, `Hero`, `Intro`, `Services`, `Ritual`, `Locations`, `Social`, `Footer`) e `Booking/` (widget de agendamento) |
 | `src/i18n/` | Dicionários PT/EN tipados + `LangProvider` |
 | `src/data/` | `services.ts` (dados do motor de agendamento), `contact.ts` (links de Instagram/Maps) |
-| `src/lib/` | `calendar.ts` (disponibilidade/grade do calendário), `whatsapp.ts` (mensagem/link de reserva) |
+| `src/lib/` | `calendar.ts` (grade do calendário), `availability.ts` (geração dinâmica de horários cruzando com o Google Agenda), `whatsapp.ts` (mensagem/link de reserva) |
+| `src/app/api/` | `availability/route.ts` — consulta a disponibilidade real da Lúcia no Google Calendar (Service Account, credencial server-side) |
 | `public/images/` | Fotos do site (extraídas do HTML original, que as tinha embutidas em base64) |
 | `legacy/lucia-massoterapeuta.html` | **Versão original**, pré-migração — arquivo único autocontido (HTML+CSS+JS), mantida como referência histórica. Não editar; não é mais a página em uso |
 
@@ -65,38 +66,50 @@ para detalhes): os placeholders do formulário de reserva e a mensagem
 enviada ao WhatsApp continuam sempre em português, independente do idioma
 da UI.
 
-## Motor de agendamento (protótipo)
+## Motor de agendamento
 
-`Booking/BookingWidget.tsx` é uma **simulação de calendário/disponibilidade
-no front-end**, sem back-end real — a mesma lógica do HTML original,
-portada para TypeScript:
+`Booking/BookingWidget.tsx` mostra disponibilidade **real**, sincronizada com
+as 3 agendas do Google Calendar da Lúcia (Air BnB, Terraço, Gabinete Faro) —
+não é mais simulação. Detalhe completo (fluxo, reducer, decisões da
+integração) em `docs/architecture/estrutura-frontend.md`, seção "Motor de
+agendamento". Visão geral:
 
 - `src/data/services.ts` — `SERVICES`: os 3 serviços (`premium` Faro 85€,
-  `sunset` Olhão 35€, `couple` Olhão 170€/casal), cada um com `days`
-  (dias da semana atendidos) e `slots` (horários possíveis).
-- `src/lib/calendar.ts` — `isTaken()` marca vagas como ocupadas de forma
-  **pseudo-aleatória, mas determinística** (mesmo serviço+dia+hora sempre dá
-  o mesmo resultado, não é uma agenda real); `getMonthGrid()` gera a grade
-  do calendário; `DEMO_TODAY` é o "hoje" fixo do protótipo
-  (`new Date(2026, 6, 31)`) — **intencional**, não generalizar sem que
-  alguém peça.
+  `sunset` Olhão 55€, `couple` Olhão 170€/casal), cada um com `days` (dias
+  da semana atendidos), `durationMinutes` (duração real da sessão) e
+  `workWindow` (expediente/janela de horários de início possíveis).
+- `src/app/api/availability/route.ts` — rota server-side que autentica com
+  uma Service Account do Google e consulta `calendar.freebusy.query` nas 3
+  agendas de uma vez (`GOOGLE_CALENDAR_IDS`), devolvendo só os intervalos
+  ocupados combinados — a credencial nunca chega ao navegador.
+- `src/lib/availability.ts` — `generateSlotsForDay()` gera dinamicamente os
+  horários de início válidos, cruzando expediente + duração + 30min de
+  folga obrigatória com os intervalos ocupados vindos da API.
+- `src/lib/calendar.ts` — `getMonthGrid()` gera a grade do mês, marcando
+  cada dia como disponível/cheio via `generateSlotsForDay`.
 - Fluxo: `ServiceSelect` (dispatch `SELECT_SERVICE`) → `CalendarPanel`
   (grade via `getMonthGrid`, dispatch `SELECT_DAY`) → `SlotsGrid` (dispatch
   `SELECT_SLOT`) → `BookingForm` → `handleFormSubmit` em `BookingWidget`
   monta a mensagem (`src/lib/whatsapp.ts`) e abre
   `https://wa.me/<WHATSAPP_NUMBER>?text=<mensagem>` — a confirmação real
-  acontece por WhatsApp, não há gravação de reserva em nenhum servidor.
+  acontece por WhatsApp; a reserva não é escrita automaticamente na agenda.
 - Estado central em `useReducer` (`BookingState`/`BookingAction` em
-  `BookingWidget.tsx`) — ao adicionar uma transição nova, tratar como uma
-  ação do reducer, não um `useState` solto.
+  `BookingWidget.tsx`); a disponibilidade buscada da API vive num
+  `useState` separado (dado de servidor, não transição de UI).
 - Os botões "Reservar" dos cards em `Services.tsx` pré-selecionam o serviço
   no widget via `Booking/BookingSelectionContext.tsx` (Context simples,
   registra um pedido de serviço + rola até `#reservar`; `BookingWidget`
   consome e aplica via `useEffect`).
 
-O footer já rotula a página como `"Página de demonstração — protótipo"` —
-manter esse aviso enquanto o agendamento não estiver ligado a uma agenda
-real.
+Credenciais da Service Account (`GOOGLE_CALENDAR_IDS`,
+`GOOGLE_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY`) vivem
+em `.env.local` (não comitado) e nas Environment Variables do Vercel — ver
+`.env.example` pro formato esperado e `docs/architecture/estrutura-frontend.md`
+pro passo a passo de gerar essas credenciais.
+
+O footer ainda rotula a página como `"Página de demonstração — protótipo"`
+— a disponibilidade já é real, mas o aviso permanece até as fotos
+definitivas serem confirmadas com a Lúcia (ver "Do protótipo à produção").
 
 ## Do protótipo à produção
 
@@ -106,22 +119,18 @@ resolvido (registrar cada um como uma implementação em
 
 1. ~~**`WHATSAPP_NUMBER` real**~~ — resolvido: `351966897721` em
    `src/lib/whatsapp.ts`.
-2. **Disponibilidade real** — hoje é simulada (`isTaken` em
-   `src/lib/calendar.ts`); decidir se continua simulada, se vira uma lista
-   de horários bloqueados mantida à mão, ou se liga a uma agenda de verdade
-   (Google Calendar, Calendly, etc. — ver nota abaixo sobre API/backend).
+2. ~~**Disponibilidade real**~~ — resolvido: sincronizada com as 3 agendas
+   do Google Calendar da Lúcia (ver "Motor de agendamento" acima e
+   `docs/architecture/estrutura-frontend.md`).
 3. **Remover o aviso de protótipo** do footer quando a página estiver pronta
    para publicar.
 4. **Fotos reais** — as 5 fotos atuais (`public/images/`) vieram do
    protótipo original; confirmar com a Lúcia se são as definitivas.
 
-**Sobre uma futura sincronização com o Google Agenda:** ler disponibilidade
-de uma agenda pública pode ser feito direto no cliente (API key restrita),
-mas **escrever eventos exige credencial que não pode viver no navegador** —
-por isso o projeto já está em Next.js, que permite adicionar rotas de API
-(`src/app/api/.../route.ts`) no mesmo repositório quando essa integração for
-implementada, sem precisar de um backend hospedado à parte. Ainda não há
-nenhuma rota de API neste projeto.
+O projeto está em Next.js (App Router) justamente por causa do item 2:
+escrever/ler credenciais de agenda exige uma rota de API server-side
+(`src/app/api/.../route.ts`), que não existiria num bundler puramente
+client-side. Essa rota já existe (`src/app/api/availability/route.ts`).
 
 ## Contato / dados de negócio
 

@@ -10,14 +10,14 @@ visão geral do projeto e convenções gerais de edição.
 
 ## Por que Next.js (e não só um bundler tipo Vite)
 
-O motivo declarado é uma futura sincronização da seção de agendamento com o
-Google Agenda: ler disponibilidade de uma agenda pública pode ser feito
-direto no navegador, mas **escrever eventos exige credencial que não pode
-viver no cliente**. Next.js permite adicionar rotas de API
-(`src/app/api/.../route.ts`) no mesmo projeto para guardar essa credencial e
-expor só o necessário ao front-end, sem precisar hospedar um backend
-separado. Essa integração **ainda não existe** — é só a razão da escolha de
-stack, registrada aqui para não se perder de vista.
+O motivo declarado foi uma futura sincronização da seção de agendamento com
+o Google Agenda: ler disponibilidade de uma agenda **privada** exige uma
+credencial (Service Account) que não pode viver no navegador. Next.js
+permite adicionar rotas de API (`src/app/api/.../route.ts`) no mesmo
+projeto para guardar essa credencial e expor só o necessário ao front-end,
+sem precisar hospedar um backend separado. Essa integração **já existe** —
+ver "Motor de agendamento" abaixo, seção "Sincronização com o Google
+Agenda".
 
 ---
 
@@ -69,10 +69,13 @@ comportamento do site original, que também nunca as traduzia):
 
 ### Dados
 
-`src/data/services.ts` — `SERVICES: Record<ServiceKey, Service>`, o
-equivalente direto do objeto `SERVICES` do `<script>` original: nome PT/EN,
-preço (número, usado no total do resumo), local PT/EN, `days` (array de
-`Date#getDay()`) e `slots` (strings `"HH:MM"`).
+`src/data/services.ts` — `SERVICES: Record<ServiceKey, Service>`: nome
+PT/EN, preço (número, usado no total do resumo), local PT/EN, `days`
+(array de `Date#getDay()`), `durationMinutes` (duração real da sessão, em
+minutos) e `workWindow` (`{ start, end }`, janela `"HH:MM"` de horários de
+início possíveis). Não existe mais uma lista fixa de horários (`slots`) —
+os horários oferecidos são gerados dinamicamente, ver "Cálculo de
+disponibilidade" abaixo.
 
 **Isto é um dado separado do conteúdo de `Services.tsx`** (a seção de
 marketing com os 3 cards). No HTML original já era assim: o card de
@@ -84,27 +87,76 @@ total calculado no resumo do widget mostra **"170 €"** (vem de
 `SERVICES.couple.price`, usado de fato no cálculo). Não é bug desta
 migração — já era assim no original.
 
+### Sincronização com o Google Agenda
+
+`src/app/api/availability/route.ts` (rota `GET`, server-side) autentica com
+uma Service Account do Google (`google.auth.JWT`, escopo
+`calendar.freebusy`) e consulta `calendar.freebusy.query` nas 3 agendas da
+Lúcia de uma vez (`GOOGLE_CALENDAR_IDS`, lista separada por vírgula) —
+**Air BnB**, **Terraço** e **Gabinete Faro**. A Lúcia é uma pessoa só, então
+um compromisso em qualquer uma delas bloqueia as outras também: a rota
+junta os `busy` das 3 num array só antes de devolver
+`{ busy: [{start, end}] }` ao cliente, sem nunca expor título/detalhe de
+eventos nem dizer de qual agenda veio cada intervalo.
+
+Parâmetros: `year`/`month` (0-indexado, convenção de `Date#getMonth()`) — a
+disponibilidade ocupada não depende do serviço escolhido, só do mês
+visível, então o front-end busca uma vez por mês e reaproveita o resultado
+pros 3 serviços.
+
+Erros (credencial inválida, agenda não compartilhada, falha do Google) →
+HTTP 500 (credenciais ausentes) ou 502 (falha na consulta), sempre com
+`{ error: string }` — nunca um `busy` inventado. O front-end trata qualquer
+resposta não-`200` bloqueando a seleção de horário e mostrando
+`t.booking.availabilityError` (ver "Estado" abaixo).
+
+Credenciais (`GOOGLE_CALENDAR_IDS`, `GOOGLE_SERVICE_ACCOUNT_EMAIL`,
+`GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY`) nunca chegam ao navegador — vivem só
+em `.env.local` (dev) e nas Environment Variables do Vercel (produção). Ver
+`.env.example` pro formato exato. **Atenção ao colar a chave privada no
+painel do Vercel:** o valor não deve ter aspas `"` ao redor (diferente do
+`.env.local`, onde as aspas são sintaxe do formato `.env`) — colar com
+aspas sobrando quebra a autenticação silenciosamente (a rota responde `502`
+sem detalhe do motivo).
+
+Setup das credenciais (projeto Google Cloud na conta da Lúcia, Daniel como
+colaborador via IAM — sem nunca precisar da senha dela): a Lúcia cria o
+projeto e adiciona o Daniel como colaborador; o Daniel ativa a Google
+Calendar API, cria uma Service Account e gera uma chave JSON; a Lúcia
+compartilha cada uma das 3 agendas com o e-mail da Service Account,
+permissão "Ver apenas informações de disponibilidade (ocupado/livre)"; o
+Daniel preenche as variáveis com os dados da chave JSON + os IDs das 3
+agendas.
+
 ### Cálculo de disponibilidade
+
+`src/lib/availability.ts`:
+
+- `generateSlotsForDay(service, date, busy, now)` — função pura que gera os
+  horários de início válidos pra um serviço num dia: varre o `workWindow`
+  do serviço em passos de `SLOT_GRANULARITY_MINUTES` (30min), e descarta
+  qualquer horário cuja janela (duração da sessão + `BUFFER_MINUTES` de
+  folga antes/depois, também 30min) sobreponha um intervalo `busy` vindo da
+  API. Também descarta horários já passados (comparados com `now`).
+- Substituiu o antigo `isTaken()` (hash pseudo-aleatório determinístico do
+  protótipo) — não existe mais lista fixa de horários "cinza/ocupado":
+  `SlotsGrid` mostra só os horários que `generateSlotsForDay` de fato
+  devolve.
 
 `src/lib/calendar.ts`:
 
-- `isTaken(serviceKey, dayNum, slot)` — hash determinístico
-  (`serviceKey.charCodeAt(0)*31 + dayNum*7 + Number(slot)`) módulo 5; não é
-  aleatório de verdade, é só para a demonstração parecer viva com alguns
-  horários "ocupados".
-- `getMonthGrid(year, month, service, serviceKey, today)` — gera a grade do
-  mês (grade começa na segunda-feira, mesmo offset `(firstDay.getDay()+6)%7`
-  do original), calculando por dia se está no passado (`isPast`, comparado
-  com `DEMO_TODAY`) e sua disponibilidade (`"none" | "available" | "full"`).
-- `DEMO_TODAY = new Date(2026, 6, 31)` — o "hoje" fixo do protótipo. Fica
-  desatualizado a partir do dia seguinte a essa data; é intencional (ver
-  `CLAUDE.md`, "Do protótipo à produção"), não generalizar sem pedido
-  explícito.
-- `formatSummaryDate(day, monthLabel, year)` — formata a data do resumo
-  (`"12 ago 2026"`, 3 letras minúsculas do mês). **Diferente** do formato
-  usado na mensagem do WhatsApp, que usa o nome do mês por extenso em
-  maiúsculas (`"12 AGOSTO 2026"`) — replica a diferença que já existia entre
-  `updateSummary()` e `submitBooking()` no original.
+- `getMonthGrid(year, month, service, busy, now)` — gera a grade do mês
+  (grade começa na segunda-feira, mesmo offset `(firstDay.getDay()+6)%7` do
+  original), calculando por dia se está no passado (comparado à meia-noite
+  de `now`) e sua disponibilidade (`"none" | "available" | "full"`, via
+  `generateSlotsForDay(...).length > 0`). `now` default é `new Date()` —
+  "hoje" é a data real do sistema (o antigo `DEMO_TODAY` fixo do protótipo
+  foi removido, não existe mais data congelada).
+- `formatSummaryDate(day, monthLabel, year)` — inalterado: formata a data
+  do resumo (`"12 ago 2026"`, 3 letras minúsculas do mês). **Diferente** do
+  formato usado na mensagem do WhatsApp, que usa o nome do mês por extenso
+  em maiúsculas (`"12 AGOSTO 2026"`) — replica a diferença que já existia
+  entre `updateSummary()` e `submitBooking()` no original.
 
 ### Estado (`Booking/BookingWidget.tsx`)
 
@@ -140,6 +192,19 @@ não uma chave do dicionário — no original esse `<p>` nunca tinha
 serviço (`emptyHintServiceChosen` no dicionário) era trocado dinamicamente
 por `selectService()`.
 
+**Disponibilidade buscada da API** vive num `useState<AvailabilityState>`
+separado do reducer (é dado de servidor, não uma transição de UI). Um
+detalhe não-óbvio: o estado "carregando" **não** é setado sincronamente no
+início do `useEffect` que dispara o `fetch` — isso dispararia o lint
+`react-hooks/set-state-in-effect` (cascata de renders). Em vez disso,
+"carregando" é **derivado**: `AvailabilityState` guarda o `monthKey`
+(`"AAAA-M"`) do último fetch que terminou, e o componente compara esse
+`monthKey` com o do `state.currentMonth` atual — se forem diferentes, ainda
+está carregando. `setAvailability` só é chamado dentro dos callbacks
+`.then()`/`.catch()` da promise, nunca fora deles. O fetch é keyado só em
+`state.currentMonth` (não em `serviceKey`), porque a disponibilidade não
+depende do serviço.
+
 ### Pré-seleção a partir dos cards de `Services`
 
 `Booking/BookingSelectionContext.tsx` — Context simples
@@ -155,10 +220,10 @@ acesso direto ao estado de outro.
 
 | Arquivo | Responsabilidade |
 |---|---|
-| `BookingWidget.tsx` | Reducer, mensagem de feedback, monta o layout (`.booking-panel` com `.booking-left`/`.booking-right`) |
+| `BookingWidget.tsx` | Reducer, fetch de disponibilidade (`/api/availability`), mensagem de feedback, monta o layout (`.booking-panel` com `.booking-left`/`.booking-right`) |
 | `ServiceSelect.tsx` | Lista dos 3 serviços clicáveis |
-| `CalendarPanel.tsx` | Cabeçalho do mês + navegação + grade de dias (sem o wrapper `.booking-right`, que fica no widget) |
-| `SlotsGrid.tsx` | Horários do dia selecionado |
+| `CalendarPanel.tsx` | Cabeçalho do mês + navegação + grade de dias via `getMonthGrid` (sem o wrapper `.booking-right`, que fica no widget) |
+| `SlotsGrid.tsx` | Renderiza a lista de horários já calculada (`generateSlotsForDay`, resolvida no widget) pro dia selecionado |
 | `SummaryBox.tsx` | Resumo (serviço/local/data/hora/total) |
 | `BookingForm.tsx` | Nome/telefone/nota (refs não-controlados, lidos só no submit — igual ao `document.getElementById(...).value` do original) + botão de confirmar |
 
